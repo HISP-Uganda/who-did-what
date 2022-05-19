@@ -8,6 +8,8 @@ import {
   PaginationSeparator,
   usePagination,
 } from "@ajna/pagination";
+import { get } from "lodash";
+
 import {
   Center,
   Select,
@@ -18,19 +20,80 @@ import {
   Th,
   Thead,
   Tr,
+  Box,
+  Heading,
 } from "@chakra-ui/react";
 import { useStore } from "effector-react";
 import { ChangeEvent } from "react";
 import { $store } from "../Store";
-import { findAllUsers, findRecord } from "../utils";
+import { columns } from "../utils";
 
 type AppProps = {
   data: any;
 };
 
-const PaginatedTable = ({ data }: AppProps) => {
+export const innerColumns = (index: number) => {
+  if (index === 0) {
+    return {
+      position: "sticky",
+      w: "200px",
+      minWidth: "200px",
+      maxWidth: "200px",
+      left: "0px",
+      backgroundColor: "white",
+      zIndex: 100,
+    } as any;
+  }
+  if (index === 1) {
+    return {
+      position: "sticky",
+      w: "150px",
+      minW: "150px",
+      maxWidth: "150px",
+      left: "200px",
+      backgroundColor: "white",
+      zIndex: 100,
+    } as any;
+  }
+  return {} as any;
+};
+
+export const otherRows = (index: number, bg: string = "white") => {
+  if (index === 0) {
+    return {
+      position: "sticky",
+      backgroundColor: "white",
+      w: "200px",
+      minWidth: "200px",
+      maxWidth: "200px",
+      left: "0px",
+      top: "0px",
+      zIndex: 10000,
+    } as any;
+  }
+  if (index === 1) {
+    return {
+      position: "sticky",
+      backgroundColor: "white",
+      w: "150px",
+      minW: "150px",
+      maxWidth: "150px",
+      left: "200px",
+      top: "0px",
+      zIndex: 10000,
+    } as any;
+  }
+  return {
+    top: "0px",
+    position: "sticky",
+    bg,
+    // textAlign: "center",
+    zIndex: 1000,
+  } as any;
+};
+
+const DetailsTable = ({ data }: AppProps) => {
   const store = useStore($store);
-  const allUsers = findAllUsers(data);
   const {
     pages,
     pagesCount,
@@ -40,13 +103,13 @@ const PaginatedTable = ({ data }: AppProps) => {
     pageSize,
     setPageSize,
   } = usePagination({
-    total: allUsers.length,
+    total: data.length,
     limits: {
       outer: 4,
       inner: 4,
     },
     initialState: {
-      pageSize: 10,
+      pageSize: 20,
       currentPage: 1,
     },
   });
@@ -62,51 +125,41 @@ const PaginatedTable = ({ data }: AppProps) => {
     setPageSize(pageSize);
     setCurrentPage(1);
   };
-
   return (
-    <div>
-      <Table variant="striped" w="100%">
-        <Thead>
-          <Tr>
-            <Th>Username</Th>
-            <Th>Full Name</Th>
-            <Th>Contact</Th>
-            <Th textAlign="center">Doses Created</Th>
-            <Th textAlign="center">Doses Completed</Th>
-            <Th textAlign="center">Vaccines Created</Th>
-            <Th textAlign="center">Vaccines Completed</Th>
-            <Th textAlign="center">Events Created</Th>
-            <Th textAlign="center">Events Completed</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {allUsers
-            .slice(currentPage * pageSize - pageSize, pageSize * currentPage)
-            .map((user: any) => {
-              const {
-                doses,
-                vaccines,
-                completedDose,
-                completedVaccine,
-                totalCompleted,
-                total,
-              } = findRecord(data, user);
-              return (
-                <Tr key={user}>
-                  <Td>{user}</Td>
-                  <Td>{store.users[user]?.displayName}</Td>
-                  <Td>{store.users[user]?.phoneNumber}</Td>
-                  <Td textAlign="center">{doses}</Td>
-                  <Td textAlign="center">{completedDose}</Td>
-                  <Td textAlign="center">{vaccines}</Td>
-                  <Td textAlign="center">{completedVaccine}</Td>
-                  <Td textAlign="center">{total}</Td>
-                  <Td textAlign="center">{totalCompleted}</Td>
+    <Box m="auto" w="100%">
+      <Box
+        position="relative"
+        overflow="auto"
+        whiteSpace="nowrap"
+        h="calc(100vh - 325px)"
+      >
+        <Table variant="striped" size="sm" colorScheme="gray">
+          <Thead>
+            <Tr>
+              {columns.map((c, index) => (
+                <Th key={c.id} {...otherRows(index)}>
+                  <Heading as="h6" size="xs" textTransform="none">
+                    {c.name}
+                  </Heading>
+                </Th>
+              ))}
+            </Tr>
+          </Thead>
+          <Tbody>
+            {data
+              .slice(currentPage * pageSize - pageSize, pageSize * currentPage)
+              .map((h: any) => (
+                <Tr key={h.id}>
+                  {columns.map((c, index) => (
+                    <Td key={c.id} {...innerColumns(index)}>
+                      {get(h, c.id, "")}
+                    </Td>
+                  ))}
                 </Tr>
-              );
-            })}
-        </Tbody>
-      </Table>
+              ))}
+          </Tbody>
+        </Table>
+      </Box>
       <Pagination
         pagesCount={pagesCount}
         currentPage={currentPage}
@@ -177,8 +230,8 @@ const PaginatedTable = ({ data }: AppProps) => {
           <option value="50">50</option>
         </Select>
       </Center>
-    </div>
+    </Box>
   );
 };
 
-export default PaginatedTable;
+export default DetailsTable;

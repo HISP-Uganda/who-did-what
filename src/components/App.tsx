@@ -30,7 +30,7 @@ const App = () => {
             fontSize="35px"
           >
             <Grid templateColumns="repeat(4, 1fr)" w={"full"} gap={1}>
-              <Link
+              {/* <Link
                 to="/"
                 getActiveProps={() => ({
                   style: { color: "#4299E1" },
@@ -45,10 +45,10 @@ const App = () => {
                 >
                   Dashboard
                 </Button>
-              </Link>
+              </Link> */}
 
               <Link
-                to="/statistics"
+                to="/"
                 getActiveProps={() => ({
                   style: { color: "#4299E1" },
                 })}

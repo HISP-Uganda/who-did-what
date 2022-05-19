@@ -28,12 +28,13 @@ export interface Store {
   organisationUnits: any[];
   programs: Program[];
   dataSets: DataSet[];
-  orgUnits: Orgunit[];
   program: any;
   stage: string;
   attribute: string;
   users: { [k: string]: any };
   districts: { [k: string]: string };
+  expandedKeys: string[];
+  selected: any[];
 }
 export interface ProgramSetting {
   program: string;

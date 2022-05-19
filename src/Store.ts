@@ -14,6 +14,8 @@ import {
   changeDistrict,
   changeUsers,
   changeDistricts,
+  setExpandedKeys,
+  setSelected,
 } from "./Events";
 import { Store } from "./interfaces";
 
@@ -26,11 +28,12 @@ export const $store = domain
     programs: [],
     dataSets: [],
     program: {},
-    orgUnits: [],
     stage: "",
     attribute: "",
     users: [],
     districts: {},
+    expandedKeys: [],
+    selected: [],
   })
   .on(changeTotal, (state, total) => {
     return { ...state, total: { ...state.total, ...total } };
@@ -78,6 +81,12 @@ export const $store = domain
   })
   .on(changeDistricts, (state, districts) => {
     return { ...state, districts };
+  })
+  .on(setExpandedKeys, (state, expandedKeys) => {
+    return { ...state, expandedKeys };
+  })
+  .on(setSelected, (state, selected) => {
+    return { ...state, selected };
   });
 
 export const $trackerPrograms = $store.map(({ programs }) => {

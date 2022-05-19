@@ -3,43 +3,77 @@ import { fromPairs, isEmpty } from "lodash";
 import { useQuery } from "react-query";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import Localbase from "localbase";
 import {
   changeDistricts,
+  changeOu,
   changeProgram,
   changeTotal,
   changeTypes,
   changeUsers,
+  setExpandedKeys,
+  setSelected,
 } from "./Events";
-import { Indicator } from "./interfaces";
 
 export const api = axios.create({
   // baseURL: "http://localhost:3001/",
   baseURL: "https://services.dhis2.hispuganda.org/",
 });
+export const db = new Localbase("epivac");
+
+export const useInitials = () => {
+  const engine = useDataEngine();
+  const ouQuery = {
+    me: {
+      resource: "me.json",
+      params: {
+        fields: "organisationUnits[id,name,leaf]]",
+      },
+    },
+  };
+  return useQuery<{ facilities: any[]; expandedKeys: string[] }, Error>(
+    ["initial"],
+    async () => {
+      const data = await db.collection("facilities").get();
+      const expandedKeys = await db.collection("expanded").get();
+      if (data.length > 0) {
+        return {
+          facilities: data,
+          expandedKeys: expandedKeys.map((k: any) => k.value),
+        };
+      } else {
+        const {
+          me: { organisationUnits },
+        }: any = await engine.query(ouQuery);
+        const facilities: any[] = organisationUnits.map((unit: any) => {
+          const parent = {
+            id: unit.id,
+            pId: unit.pId || "",
+            value: unit.id,
+            title: unit.name,
+            isLeaf: unit.leaf,
+          };
+          return parent;
+        });
+        const toBeSaved = facilities.map((facility: any) => {
+          return { ...facility, _key: facility.id };
+        });
+        db.collection("facilities").set(toBeSaved, { keys: true });
+        return { facilities, expandedKeys: [] };
+      }
+    }
+  );
+};
 
 export function useLoader() {
   const engine = useDataEngine();
   const query = {
-    dataSets: {
-      resource: "dataSets.json",
-      params: {
-        fields: "id,name",
-        paging: false,
-      },
-    },
     districts: {
       resource: "organisationUnits.json",
       params: {
         fields: "id,name",
         paging: false,
         level: 3,
-      },
-    },
-    me: {
-      resource: "me.json",
-      params: {
-        fields: "organisationUnits[id,name]",
-        paging: false,
       },
     },
     users: {
@@ -51,20 +85,45 @@ export function useLoader() {
         paging: "false",
       },
     },
-    programs: {
-      resource: "programs.json",
+  };
+  const ouQuery = {
+    me: {
+      resource: "me.json",
       params: {
-        paging: false,
-        fields: "id,name,programType,trackedEntityType",
+        fields: "organisationUnits[id,name,leaf]",
       },
     },
   };
   return useQuery<any, Error>("initial", async () => {
+    const data = await db.collection("facilities").get();
+    const expandedKeys = await db.collection("expanded").get();
+    if (data.length > 0) {
+      changeOu(data);
+      setExpandedKeys(expandedKeys.map((k: any) => k.value));
+    } else {
+      const {
+        me: { organisationUnits },
+      }: any = await engine.query(ouQuery);
+      const facilities: any[] = organisationUnits.map((unit: any) => {
+        const parent = {
+          id: unit.id,
+          pId: unit.pId || "",
+          value: unit.id,
+          title: unit.name,
+          isLeaf: unit.leaf,
+        };
+        return parent;
+      });
+      const toBeSaved = facilities.map((facility: any) => {
+        return { ...facility, _key: facility.id };
+      });
+      db.collection("facilities").set(toBeSaved, { keys: true });
+      changeOu(facilities);
+      setSelected(facilities);
+      setExpandedKeys([]);
+    }
     const {
-      me: { organisationUnits },
       districts: { organisationUnits: ds },
-      dataSets: { dataSets },
-      programs: { programs },
       users: { users },
     }: any = await engine.query(query);
     const allUsers = users.map((u: any) => [
@@ -73,13 +132,13 @@ export function useLoader() {
     ]);
     changeDistricts(fromPairs(ds.map((d: any) => [d.id, d.name])));
     changeUsers(fromPairs(allUsers));
-    changeTypes({ programs, dataSets, organisationUnits });
+    // changeTypes({ programs, dataSets, organisationUnits });
     return true;
   });
 }
 
 export function useDoses(organisationUnits: string[]) {
-  return useQuery<any, Error>(["es-doses"], async () => {
+  return useQuery<any, Error>(["es-doses", ...organisationUnits], async () => {
     let must: any[] = [
       {
         bool: {
@@ -283,7 +342,7 @@ export function useDistricts(
             },
           ];
         }
-        
+
         const query = {
           index: "programstageinstance",
           query: {
@@ -315,6 +374,162 @@ export function useDistricts(
   );
 }
 
+export function useWhoDidWhat(
+  organisationUnits: string[],
+  startDate = "",
+  endDate = "",
+  username = ""
+) {
+  console.log(organisationUnits);
+  return useQuery<any, Error>(
+    ["who-did-what", ...organisationUnits, startDate, endDate, username],
+    async () => {
+      if (startDate && endDate && organisationUnits.length > 0) {
+        let must: any[] = [
+          {
+            range: {
+              "event.created": {
+                gte: startDate,
+                lte: endDate,
+                time_zone: "+03:00",
+              },
+            },
+          },
+          {
+            bool: {
+              should: [
+                { terms: { "event.level1": organisationUnits } },
+                { terms: { "event.level2": organisationUnits } },
+                { terms: { "event.level3": organisationUnits } },
+                { terms: { "event.level4": organisationUnits } },
+                { terms: { "event.level5": organisationUnits } },
+              ],
+            },
+          },
+          // { terms: { "event.status": ["active", "completed"] } },
+          // {
+          //   match: {
+          //     "event.deleted": false,
+          //   },
+          // },
+          // {
+          //   exists: {
+          //     field: "dose",
+          //   },
+          // },
+          // {
+          //   exists: {
+          //     field: "vaccine",
+          //   },
+          // },
+        ];
+
+        if (username) {
+          must = [
+            ...must,
+            {
+              match: {
+                "event.storedby": String(username).toLowerCase(),
+              },
+            },
+          ];
+        }
+        const query = {
+          index: "epivac",
+          query: {
+            bool: {
+              must,
+            },
+          },
+        };
+
+        const unitQuery = {
+          index: "facilities",
+          size: 10000,
+          query: {
+            bool: {
+              should: [
+                { terms: { countryId: organisationUnits } },
+                { terms: { regionId: organisationUnits } },
+                { terms: { districtId: organisationUnits } },
+                { terms: { subCountyId: organisationUnits } },
+                { terms: { id: organisationUnits } },
+              ],
+            },
+          },
+        };
+        let { data }: any = await api.post("wal/scroll", query);
+        let {
+          data: {
+            hits: { hits: facilities },
+          },
+        } = await api.post("wal/search", unitQuery);
+        facilities = facilities.map((f: any) => f._source);
+        console.log(facilities);
+        data = data.map(({ tei, event, ...others }: any) => {
+          if (tei) {
+            const facility = facilities.find((f: any) => {
+              return (
+                [
+                  f.countryId,
+                  f.regionId,
+                  f.districtId,
+                  f.subCountyId,
+                  f.id,
+                ].indexOf(tei.regorgunit) !== -1
+              );
+            });
+
+            if (facility) {
+              tei = {
+                ...tei,
+                regorgunitname: [
+                  // facility.countryName,
+                  // facility.regionName,
+                  facility.districtName,
+                  facility.subCountyName,
+                  facility.name,
+                ].join("/"),
+              };
+            }
+          }
+          if (event) {
+            const facility = facilities.find((f: any) => {
+              return (
+                [
+                  f.countryId,
+                  f.regionId,
+                  f.districtId,
+                  f.subCountyId,
+                  f.id,
+                ].indexOf(event.orgunit) !== -1
+              );
+            });
+
+            if (facility) {
+              event = {
+                ...event,
+                orgunitname: [
+                  // facility.countryName,
+                  // facility.regionName,
+                  facility.districtName,
+                  facility.subCountyName,
+                  facility.name,
+                ].join("/"),
+              };
+            }
+          }
+
+          return { ...others, event, tei };
+        });
+        return data;
+      } else {
+        return [];
+      }
+    }
+  );
+}
+
 export function useEs(
   q: string = "",
   startDate = "",
@@ -327,38 +542,52 @@ export function useEs(
       if (startDate && endDate) {
         let must: any[] = [
           {
-            range: {
-              created: {
-                lte: endDate,
-                gte: startDate,
-              },
+            bool: {
+              should: [
+                {
+                  range: {
+                    "LUIsbsm3okG.created": {
+                      lte: endDate,
+                      gte: startDate,
+                    },
+                  },
+                },
+                {
+                  range: {
+                    "bbnyNYD1wgS.created": {
+                      lte: endDate,
+                      gte: startDate,
+                    },
+                  },
+                },
+              ],
             },
           },
           {
             bool: {
               should: [
-                { terms: { "path.national": organisationUnits } },
-                { terms: { "path.region": organisationUnits } },
-                { terms: { "path.district": organisationUnits } },
-                { terms: { "path.subcounty": organisationUnits } },
-                { terms: { "path.facility": organisationUnits } },
+                { terms: { "event.level1": organisationUnits } },
+                { terms: { "event.level2": organisationUnits } },
+                { terms: { "event.level3": organisationUnits } },
+                { terms: { "event.level4": organisationUnits } },
+                { terms: { "event.level5": organisationUnits } },
               ],
             },
           },
-          { terms: { status: ["active", "completed"] } },
+          { terms: { "event.status": ["active", "completed"] } },
           {
             match: {
-              deleted: false,
+              "event.deleted": false,
             },
           },
           {
             exists: {
-              field: "dose",
+              field: "bbnyNYD1wgS.value",
             },
           },
           {
             exists: {
-              field: "vaccine",
+              field: "LUIsbsm3okG.value",
             },
           },
         ];
@@ -367,28 +596,48 @@ export function useEs(
             ...must,
             {
               match: {
-                storedby: String(q).toLowerCase(),
+                "LUIsbsm3okG.createdByUserInfo.username":
+                  String(q).toLowerCase(),
+              },
+            },
+            {
+              match: {
+                "bbnyNYD1wgS.createdByUserInfo.username":
+                  String(q).toLowerCase(),
               },
             },
           ];
         }
         const query = {
-          index: "programstageinstance",
+          index: "epivac",
           query: {
             bool: {
               must,
             },
           },
           aggs: {
-            summary: {
+            dose: {
               terms: {
-                field: "storedby.keyword",
+                field: "LUIsbsm3okG.createdByUserInfo.username.keyword",
                 size: 10000,
               },
               aggs: {
                 status: {
                   terms: {
-                    field: "status.keyword",
+                    field: "event.status.keyword",
+                  },
+                },
+              },
+            },
+            vaccine: {
+              terms: {
+                field: "bbnyNYD1wgS.createdByUserInfo.username.keyword",
+                size: 10000,
+              },
+              aggs: {
+                status: {
+                  terms: {
+                    field: "event.status.keyword",
                   },
                 },
               },
@@ -398,7 +647,7 @@ export function useEs(
         const { data }: any = await api.post("wal", query);
         return data;
       }
-      return { summary: { buckets: [] } };
+      return { vaccine: { buckets: [] }, dose: { buckets: [] } };
     }
   );
 }

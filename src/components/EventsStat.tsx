@@ -1,4 +1,3 @@
-import { usePagination } from "@ajna/pagination";
 import {
   Box,
   Button,
@@ -9,7 +8,6 @@ import {
   Spinner,
   Stack,
 } from "@chakra-ui/react";
-import { useDataEngine } from "@dhis2/app-runtime";
 import { DatePicker } from "antd";
 import "antd/dist/antd.css";
 import { useStore } from "effector-react";
@@ -18,6 +16,7 @@ import { ChangeEvent, useState } from "react";
 import * as XLSX from "xlsx";
 import { useEs } from "../Queries";
 import { $store } from "../Store";
+import { findAllUsers, findRecord } from "../utils";
 import PaginatedTable from "./PaginatedTable";
 
 const { RangePicker } = DatePicker;
@@ -25,7 +24,7 @@ const { RangePicker } = DatePicker;
 const EventsStat = () => {
   const [date, setDate] = useState<[any, any]>([moment(), moment()]);
   const [downloading, setDownloading] = useState<boolean>(false);
-  
+
   const [selectedDate, setSelectedDate] = useState<[string, string]>([
     null,
     null,
@@ -59,6 +58,7 @@ const EventsStat = () => {
   };
 
   const downloadEvents = async () => {
+    const allUsers = findAllUsers(data);
     setQuery(q);
     setSelectedDate([
       date[0].format("YYYY-MM-DD"),
@@ -70,17 +70,33 @@ const EventsStat = () => {
       [
         "Username",
         "Full Name",
-        "Phone Contact",
+        "Contact",
+        "Doses Created",
+        "Doses Completed",
+        "Vaccines Created",
+        "Vaccines Completed",
         "Events Created",
         "Events Completed",
       ],
-      ...data.summary.buckets.map((r: any) => {
+      ...allUsers.map((user: string) => {
+        const {
+          doses,
+          vaccines,
+          completedDose,
+          completedVaccine,
+          totalCompleted,
+          total,
+        } = findRecord(data, user);
         return [
-          r.key,
-          store.users[r.key]?.displayName,
-          store.users[r.key]?.phoneNumber,
-          r.doc_count,
-          findCompleted(r),
+          user,
+          store.users[user]?.displayName,
+          store.users[user]?.phoneNumber,
+          doses,
+          completedDose,
+          vaccines,
+          completedVaccine,
+          total,
+          totalCompleted,
         ];
       }),
     ];
@@ -107,7 +123,6 @@ const EventsStat = () => {
           onChange={(e: ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}
         />
         <RangePicker size="large" value={date} onChange={setDate} />
-
         <Button colorScheme="blue" onClick={changeSearch} isLoading={isLoading}>
           Submit
         </Button>
@@ -116,7 +131,10 @@ const EventsStat = () => {
           colorScheme="blue"
           onClick={downloadEvents}
           isLoading={downloading}
-          isDisabled={data?.summary.buckets.length === 0}
+          isDisabled={
+            data?.vaccine.buckets.length === 0 &&
+            data?.dose.buckets.length === 0
+          }
         >
           Download
         </Button>
