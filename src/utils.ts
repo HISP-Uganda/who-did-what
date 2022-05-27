@@ -179,7 +179,7 @@ export const columns = [
   },
   {
     name: "Profile created by",
-    id: "tei.storedby",
+    id: "tei_stored_by",
   },
   {
     name: "Client category",
@@ -259,169 +259,169 @@ export const columns = [
   },
   {
     name: "Registering facility",
-    id: "tei.regorgunitname",
+    id: "regorgunitname",
   },
   {
     name: "Date of Vaccination",
-    id: "event.executiondate",
+    id: "event_execution_date",
   },
   {
     name: "Vaccine Name",
-    id: "bbnyNYD1wgS.value",
+    id: "bbnyNYD1wgS",
   },
   {
     name: "Underlying condition",
-    id: "bCtWZGjSWM8.value",
+    id: "bCtWZGjSWM8",
   },
 
   // {
   //   name: "Underlying condition Other",
-  //   id: "dpyQUtizp7s.value",
+  //   id: "dpyQUtizp7s",
   // },
   // {
   //   name: "Immunodeficiency ",
-  //   id: "MuZ9dMVXpuM.value",
+  //   id: "MuZ9dMVXpuM",
   // },
   // {
   //   name: "Cardiovascular Disease",
-  //   id: "LNHAYF3qdZl.value",
+  //   id: "LNHAYF3qdZl",
   // },
   // {
   //   name: "Chronic Lung Disease",
-  //   id: "C0Bony47eKp.value",
+  //   id: "C0Bony47eKp",
   // },
   // {
   //   name: "Diabetes",
-  //   id: "TT1h0vGu5da.value",
+  //   id: "TT1h0vGu5da",
   // },
   // {
   //   name: "Malignancy",
-  //   id: "xVxLMku5DMX.value",
+  //   id: "xVxLMku5DMX",
   // },
   // {
   //   name: "Neurological/Neuromuscular",
-  //   id: "VCetMtYu1DY.value",
+  //   id: "VCetMtYu1DY",
   // },
   // {
   //   name: "Elsewhere dose place",
-  //   id: "AmTw4pWCCaJ.value",
+  //   id: "AmTw4pWCCaJ",
   // },
   {
     name: "Event created by",
-    id: "event.storedby",
+    id: "event_stored_by",
   },
   {
     name: "Created on",
-    id: "event.created",
+    id: "event_created",
   },
   {
     name: "Manufacturer",
-    id: "rpkH9ZPGJcX.value",
+    id: "rpkH9ZPGJcX",
   },
   // {
   //   name: "Renal Disease",
-  //   id: "gW4pd818Sw8.value",
+  //   id: "gW4pd818Sw8",
   // },
   // {
   //   name: "Elsewhere Dose given",
-  //   id: "vk2nF6wZwY4.value",
+  //   id: "vk2nF6wZwY4",
   // },
   // {
   //   name: "Elsewhere dose outside country facility",
-  //   id: "OW3erclrDW8.value",
+  //   id: "OW3erclrDW8",
   // },
   // {
   //   name: "Elsewhere dose in-country facility",
-  //   id: "X7tI86pr1y0.value",
+  //   id: "X7tI86pr1y0",
   // },
   // {
   //   name: "Elsewhere dose date",
-  //   id: "lySxMCMSo8Z.value",
+  //   id: "lySxMCMSo8Z",
   // },
   {
     name: "Batch Number",
-    id: "Yp1F4txx8tm.value",
+    id: "Yp1F4txx8tm",
   },
   // {
   //   name: "Hypertension",
-  //   id: "fTe4Vd3iqkA.value",
+  //   id: "fTe4Vd3iqkA",
   // },
   {
     name: "Dose Number",
-    id: "LUIsbsm3okG.value",
+    id: "LUIsbsm3okG",
   },
   {
     name: "Vaccination facility",
-    id: "event.orgunitname",
+    id: "orgunitname",
   },
   {
     name: "Event Status",
-    id: "event.status",
+    id: "event_status",
   },
   // {
   //   name: "Elsewhere vaccine given",
-  //   id: "wwX1eEiYLGR.value",
+  //   id: "wwX1eEiYLGR",
   // },
   // {
   //   name: "Client followed up",
-  //   id: "uBtXpcAwqMS.value",
+  //   id: "uBtXpcAwqMS",
   // },
   // {
   //   name: " Elsewhere dose vaccine batch",
-  //   id: "muCgXjnCfnS.value",
+  //   id: "muCgXjnCfnS",
   // },
   // {
   //   name: "Last Dose",
-  //   id: "DSOWCIdQ8Tr.value",
+  //   id: "DSOWCIdQ8Tr",
   // },
   // {
   //   name: "Tuberculosis",
-  //   id: "ci6y2Y58SoF.value",
+  //   id: "ci6y2Y58SoF",
   // },
   // {
   //   name: "Elsewhere dose vaccine manufacturer",
-  //   id: "taGJD9hkX0s.value",
+  //   id: "taGJD9hkX0s",
   // },
   // {
   //   name: "Follow up outcome",
-  //   id: "DlIdOBkBm3V.value",
+  //   id: "DlIdOBkBm3V",
   // },
   // {
   //   name: "Chronic respiratorry conditions",
-  //   id: "h1IRhKsNq1N.value",
+  //   id: "h1IRhKsNq1N",
   // },
   // {
   //   name: "Total doses",
-  //   id: "PamkjF1JUnE.value",
+  //   id: "PamkjF1JUnE",
   // },
   // {
   //   name: "Suggested date for next dose",
-  //   id: "FFWcps4MfuH.value",
+  //   id: "FFWcps4MfuH",
   // },
   // {
   //   name: "Self registered",
-  //   id: "Bkgeb98v5Ea.value",
+  //   id: "Bkgeb98v5Ea",
   // },
   // {
   //   name: "Self registered and vaccinated",
-  //   id: "Bu7jnTZ6i9m.value",
+  //   id: "Bu7jnTZ6i9m",
   // },
   // {
   //   name: "Elsewhere dose in-country district",
-  //   id: "ObwW38YrQHu.value",
+  //   id: "ObwW38YrQHu",
   // },
 
   // {
   //   name: "Elsewhere dose outside country",
-  //   id: "ONsseOxElW9.value",
+  //   id: "ONsseOxElW9",
   // },
   // {
   //   name: "Other Batch Number ",
-  //   id: "cQIgju3IKH7.value",
+  //   id: "cQIgju3IKH7",
   // },
   // {
   //   name: "Elsewhere dose number",
-  //   id: "AoHMuBgBlkc.value",
+  //   id: "AoHMuBgBlkc",
   // },
 ];
 

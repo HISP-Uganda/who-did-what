@@ -6,7 +6,7 @@ import {
   PaginationPageGroup,
   PaginationPrevious,
   PaginationSeparator,
-  usePagination,
+  usePagination
 } from "@ajna/pagination";
 import {
   Center,
@@ -17,12 +17,12 @@ import {
   Text,
   Th,
   Thead,
-  Tr,
+  Tr
 } from "@chakra-ui/react";
 import { useStore } from "effector-react";
 import { ChangeEvent } from "react";
 import { $store } from "../Store";
-import { findAllUsers, findRecord } from "../utils";
+import { findCompleted } from "../utils";
 
 type AppProps = {
   data: any;
@@ -30,7 +30,6 @@ type AppProps = {
 
 const PaginatedTable = ({ data }: AppProps) => {
   const store = useStore($store);
-  const allUsers = findAllUsers(data);
   const {
     pages,
     pagesCount,
@@ -40,7 +39,7 @@ const PaginatedTable = ({ data }: AppProps) => {
     pageSize,
     setPageSize,
   } = usePagination({
-    total: allUsers.length,
+    total: data.summary.buckets.length,
     limits: {
       outer: 4,
       inner: 4,
@@ -71,37 +70,21 @@ const PaginatedTable = ({ data }: AppProps) => {
             <Th>Username</Th>
             <Th>Full Name</Th>
             <Th>Contact</Th>
-            <Th textAlign="center">Doses Created</Th>
-            <Th textAlign="center">Doses Completed</Th>
-            <Th textAlign="center">Vaccines Created</Th>
-            <Th textAlign="center">Vaccines Completed</Th>
             <Th textAlign="center">Events Created</Th>
             <Th textAlign="center">Events Completed</Th>
           </Tr>
         </Thead>
         <Tbody>
-          {allUsers
+          {data.summary.buckets
             .slice(currentPage * pageSize - pageSize, pageSize * currentPage)
-            .map((user: any) => {
-              const {
-                doses,
-                vaccines,
-                completedDose,
-                completedVaccine,
-                totalCompleted,
-                total,
-              } = findRecord(data, user);
+            .map((row: any) => {
               return (
-                <Tr key={user}>
-                  <Td>{user}</Td>
-                  <Td>{store.users[user]?.displayName}</Td>
-                  <Td>{store.users[user]?.phoneNumber}</Td>
-                  <Td textAlign="center">{doses}</Td>
-                  <Td textAlign="center">{completedDose}</Td>
-                  <Td textAlign="center">{vaccines}</Td>
-                  <Td textAlign="center">{completedVaccine}</Td>
-                  <Td textAlign="center">{total}</Td>
-                  <Td textAlign="center">{totalCompleted}</Td>
+                <Tr key={row.key}>
+                  <Td>{row.key}</Td>
+                  <Td>{store.users[row.key]?.displayName}</Td>
+                  <Td>{store.users[row.key]?.phoneNumber}</Td>
+                  <Td textAlign="center">{row.doc_count}</Td>
+                  <Td textAlign="center">{findCompleted(row)}</Td>
                 </Tr>
               );
             })}

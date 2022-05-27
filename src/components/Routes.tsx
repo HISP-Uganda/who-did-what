@@ -1,11 +1,12 @@
 import { Route } from "react-location";
 import Dashboard from "./Dashboard";
+import Interrogation from "./Interrogation";
 import Statistics from "./Statistics";
 import Totals from "./Totals";
 import WhoDidWhat from "./WhoDidWhat";
 
 export const Routes: Route[] = [
-  { path: "/", element: <Statistics /> },
+  { path: "/", element: <Dashboard /> },
   {
     path: "/statistics",
     element: <Statistics />,
@@ -17,5 +18,9 @@ export const Routes: Route[] = [
   {
     path: "/wdw",
     element: <WhoDidWhat />,
+  },
+  {
+    path: "/interrogation",
+    element: <Interrogation />,
   },
 ];

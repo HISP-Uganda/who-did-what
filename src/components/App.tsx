@@ -30,7 +30,7 @@ const App = () => {
             fontSize="35px"
           >
             <Grid templateColumns="repeat(4, 1fr)" w={"full"} gap={1}>
-              {/* <Link
+              <Link
                 to="/"
                 getActiveProps={() => ({
                   style: { color: "#4299E1" },
@@ -45,10 +45,9 @@ const App = () => {
                 >
                   Dashboard
                 </Button>
-              </Link> */}
-
+              </Link>
               <Link
-                to="/"
+                to="/statistics"
                 getActiveProps={() => ({
                   style: { color: "#4299E1" },
                 })}
@@ -91,6 +90,22 @@ const App = () => {
                   District Summary
                 </Button>
               </Link>
+              {/* <Link
+                to="/interrogation"
+                getActiveProps={() => ({
+                  style: { color: "#4299E1" },
+                })}
+              >
+                <Button
+                  flex={1}
+                  fontSize={"2xl"}
+                  size="lg"
+                  textTransform="uppercase"
+                  w="100%"
+                >
+                  Interrogation
+                </Button>
+              </Link> */}
             </Grid>
           </Stack>
           <Outlet />

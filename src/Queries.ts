@@ -8,6 +8,7 @@ import {
   changeDistricts,
   changeOu,
   changeProgram,
+  changeSelectedOu,
   changeTotal,
   changeTypes,
   changeUsers,
@@ -19,51 +20,54 @@ export const api = axios.create({
   // baseURL: "http://localhost:3001/",
   baseURL: "https://services.dhis2.hispuganda.org/",
 });
-export const db = new Localbase("epivac");
+export const db = new Localbase("facilities");
 
-export const useInitials = () => {
-  const engine = useDataEngine();
-  const ouQuery = {
-    me: {
-      resource: "me.json",
-      params: {
-        fields: "organisationUnits[id,name,leaf]]",
-      },
-    },
-  };
-  return useQuery<{ facilities: any[]; expandedKeys: string[] }, Error>(
-    ["initial"],
-    async () => {
-      const data = await db.collection("facilities").get();
-      const expandedKeys = await db.collection("expanded").get();
-      if (data.length > 0) {
-        return {
-          facilities: data,
-          expandedKeys: expandedKeys.map((k: any) => k.value),
-        };
-      } else {
-        const {
-          me: { organisationUnits },
-        }: any = await engine.query(ouQuery);
-        const facilities: any[] = organisationUnits.map((unit: any) => {
-          const parent = {
-            id: unit.id,
-            pId: unit.pId || "",
-            value: unit.id,
-            title: unit.name,
-            isLeaf: unit.leaf,
-          };
-          return parent;
-        });
-        const toBeSaved = facilities.map((facility: any) => {
-          return { ...facility, _key: facility.id };
-        });
-        db.collection("facilities").set(toBeSaved, { keys: true });
-        return { facilities, expandedKeys: [] };
-      }
-    }
-  );
-};
+// export const useInitials = () => {
+//   const engine = useDataEngine();
+//   const ouQuery = {
+//     me: {
+//       resource: "me.json",
+//       params: {
+//         fields: "organisationUnits[id,name,leaf]]",
+//       },
+//     },
+//   };
+//   return useQuery<{ facilities: any[]; expandedKeys: string[] }, Error>(
+//     ["initial"],
+//     async () => {
+//       const data = await db.collection("facilities").get();
+//       const expandedKeys = await db.collection("expanded").get();
+//       const selected = await db.collection("selected").get();
+//       if (data.length > 0) {
+//         return {
+//           facilities: data,
+//           expandedKeys: expandedKeys.map((k: any) => k.value),
+//         };
+//       } else {
+//         const {
+//           me: { organisationUnits },
+//         }: any = await engine.query(ouQuery);
+//         const facilities: any[] = organisationUnits.map((unit: any) => {
+//           const parent = {
+//             id: unit.id,
+//             pId: unit.pId || "",
+//             value: unit.id,
+//             title: unit.name,
+//             isLeaf: unit.leaf,
+//           };
+//           return parent;
+//         });
+//         const toBeSaved = facilities.map((facility: any) => {
+//           return { ...facility, _key: facility.id };
+//         });
+//         setSelected(organisationUnits.map((ou: any) => ou.id));
+//         db.collection("facilities").set(toBeSaved, { keys: true });
+//         db.collection("selected").set(toBeSaved, { keys: true });
+//         return { facilities, expandedKeys: [] };
+//       }
+//     }
+//   );
+// };
 
 export function useLoader() {
   const engine = useDataEngine();
@@ -90,38 +94,62 @@ export function useLoader() {
     me: {
       resource: "me.json",
       params: {
-        fields: "organisationUnits[id,name,leaf]",
+        fields: "organisationUnits[id,name,leaf,level]",
       },
     },
   };
   return useQuery<any, Error>("initial", async () => {
-    const data = await db.collection("facilities").get();
-    const expandedKeys = await db.collection("expanded").get();
-    if (data.length > 0) {
-      changeOu(data);
-      setExpandedKeys(expandedKeys.map((k: any) => k.value));
-    } else {
-      const {
-        me: { organisationUnits },
-      }: any = await engine.query(ouQuery);
-      const facilities: any[] = organisationUnits.map((unit: any) => {
-        const parent = {
-          id: unit.id,
-          pId: unit.pId || "",
-          value: unit.id,
-          title: unit.name,
-          isLeaf: unit.leaf,
-        };
-        return parent;
-      });
-      const toBeSaved = facilities.map((facility: any) => {
-        return { ...facility, _key: facility.id };
-      });
-      db.collection("facilities").set(toBeSaved, { keys: true });
-      changeOu(facilities);
-      setSelected(facilities);
-      setExpandedKeys([]);
-    }
+    // const data = await db.collection("facilities").get();
+    // const expandedKeys = await db.collection("expanded").get();
+    // const selected = await db.collection("selected").get();
+    // const facility = await db.collection("facility").get();
+    // if (data.length > 0) {
+    // changeOu(data);
+    // setExpandedKeys(expandedKeys.map((k: any) => k.value));
+    // if (selected.length > 0) {
+    //   setSelected(selected);
+    // }
+    // if (selectedLocation.length > 0) {
+    //   changeSelectedOu(selectedLocation[0]);
+    // }
+    // } else {
+    const {
+      me: { organisationUnits },
+    }: any = await engine.query(ouQuery);
+    const facilities: any[] = organisationUnits.map((unit: any) => {
+      return {
+        pId: unit.pId || "",
+        key: unit.id,
+        value: unit.id,
+        title: unit.name,
+        isLeaf: unit.leaf,
+      };
+    });
+    // await db.collection("facility").set(
+    //   facilities.map((f) => {
+    //     return { ...f, _key: f.value };
+    //   }),
+    //   { keys: true }
+    // );
+    // await db.collection("facilities").set(
+    //   facilities.map((f) => {
+    //     return { ...f, _key: f.value };
+    //   }),
+    //   { keys: true }
+    // );
+    // await db.collection("selected").set(
+    //   facilities.map(
+    //     (f) => {
+    //       return { ...f, _key: f.value };
+    //     },
+    //     { keys: true }
+    //   )
+    // );
+    changeOu(facilities);
+    changeSelectedOu(facilities[0]);
+    setSelected(facilities);
+    setExpandedKeys([]);
+    // }
     const {
       districts: { organisationUnits: ds },
       users: { users },
@@ -189,31 +217,33 @@ export function useDoses(organisationUnits: string[]) {
   });
 }
 
-export function useDashboard(organisationUnits: string[]) {
+export function useDashboard(ou: string) {
   const engine = useDataEngine();
   let query: any = {
     campaign: {
-      resource: `sqlViews/PgPX6SXZmzV/data?var=parent:${organisationUnits[0]}&paging=false`,
+      resource: `sqlViews/PgPX6SXZmzV/data?var=parent:${ou}&paging=false`,
     },
     daily: {
-      resource: `sqlViews/s5bKRhYXFCJ/data?var=parent:${organisationUnits[0]}&paging=false`,
+      resource: `sqlViews/s5bKRhYXFCJ/data?var=parent:${ou}&paging=false`,
     },
   };
-
-  const lowerUnits = organisationUnits.map((u) => u.toLowerCase());
+  // const lowerUnits = organisationUnits.map((u: any) => {
+  //   console.log(u);
+  //   return u.value.toLowerCase();
+  // });
 
   let must: any[] = [
-    {
-      bool: {
-        should: [
-          { terms: { "path.national": lowerUnits } },
-          { terms: { "path.region": lowerUnits } },
-          { terms: { "path.district": lowerUnits } },
-          { terms: { "path.subcounty": lowerUnits } },
-          { terms: { "path.facility": lowerUnits } },
-        ],
-      },
-    },
+    // {
+    //   bool: {
+    //     should: [
+    //       { terms: { "path.national": lowerUnits } },
+    //       { terms: { "path.region": lowerUnits } },
+    //       { terms: { "path.district": lowerUnits } },
+    //       { terms: { "path.subcounty": lowerUnits } },
+    //       { terms: { "path.facility": lowerUnits } },
+    //     ],
+    //   },
+    // },
     { terms: { status: ["active", "completed"] } },
     {
       match: {
@@ -250,33 +280,36 @@ export function useDashboard(organisationUnits: string[]) {
   };
 
   return useQuery<any, Error>(
-    ["query"],
+    ["query", ou],
     async () => {
-      const [
-        {
-          campaign: {
-            listGrid: { rows: cRows },
+      if (ou) {
+        const [
+          {
+            campaign: {
+              listGrid: { rows: cRows },
+            },
+            daily: {
+              listGrid: { rows: dRows },
+            },
           },
-          daily: {
-            listGrid: { rows: dRows },
+          {
+            data: { summary },
           },
-        },
-        {
-          data: { summary },
-        },
-      ]: any[] = await Promise.all([
-        engine.query(query),
-        api.post("wal", otherQuery),
-      ]);
-      const campaignData = fromPairs(cRows);
-      const dailyData = fromPairs(dRows);
-      return {
-        individual: fromPairs(
-          summary.buckets.map((b: any) => [b.key, b.doc_count])
-        ),
-        campaignData,
-        dailyData,
-      };
+        ]: any[] = await Promise.all([
+          engine.query(query),
+          api.post("wal", otherQuery),
+        ]);
+        const campaignData = fromPairs(cRows);
+        const dailyData = fromPairs(dRows);
+        return {
+          individual: fromPairs(
+            summary.buckets.map((b: any) => [b.key, b.doc_count])
+          ),
+          campaignData,
+          dailyData,
+        };
+      }
+      return { individual: {}, campaignData: {}, dailyData: {} };
     },
     {
       refetchInterval: 1000 * 10,
@@ -376,156 +409,157 @@ export function useDistricts(
 
 export function useWhoDidWhat(
   organisationUnits: string[],
+  page = 1,
+  pageSize = 20,
   startDate = "",
   endDate = "",
   username = ""
 ) {
-  console.log(organisationUnits);
   return useQuery<any, Error>(
     ["who-did-what", ...organisationUnits, startDate, endDate, username],
     async () => {
-      if (startDate && endDate && organisationUnits.length > 0) {
-        let must: any[] = [
+      let must: any[] = [];
+      let facilityQuery: any = { match_all: {} };
+      if (startDate && endDate) {
+        must = [
+          ...must,
           {
             range: {
-              "event.created": {
+              event_last_updated: {
                 gte: startDate,
                 lte: endDate,
-                time_zone: "+03:00",
               },
             },
           },
+        ];
+      }
+      if (organisationUnits && organisationUnits.length > 0) {
+        must = [
+          ...must,
           {
             bool: {
               should: [
-                { terms: { "event.level1": organisationUnits } },
-                { terms: { "event.level2": organisationUnits } },
-                { terms: { "event.level3": organisationUnits } },
-                { terms: { "event.level4": organisationUnits } },
-                { terms: { "event.level5": organisationUnits } },
+                { terms: { event_level1: organisationUnits } },
+                { terms: { event_level2: organisationUnits } },
+                { terms: { event_level3: organisationUnits } },
+                { terms: { event_level4: organisationUnits } },
+                { terms: { event_level5: organisationUnits } },
               ],
             },
           },
-          // { terms: { "event.status": ["active", "completed"] } },
-          // {
-          //   match: {
-          //     "event.deleted": false,
-          //   },
-          // },
-          // {
-          //   exists: {
-          //     field: "dose",
-          //   },
-          // },
-          // {
-          //   exists: {
-          //     field: "vaccine",
-          //   },
-          // },
         ];
-
-        if (username) {
-          must = [
-            ...must,
-            {
-              match: {
-                "event.storedby": String(username).toLowerCase(),
-              },
-            },
-          ];
-        }
-        const query = {
-          index: "epivac",
-          query: {
-            bool: {
-              must,
-            },
+        facilityQuery = {
+          bool: {
+            should: [
+              { terms: { countryId: organisationUnits } },
+              { terms: { regionId: organisationUnits } },
+              { terms: { districtId: organisationUnits } },
+              { terms: { subCountyId: organisationUnits } },
+              { terms: { id: organisationUnits } },
+            ],
           },
         };
-
-        const unitQuery = {
-          index: "facilities",
-          size: 10000,
-          query: {
-            bool: {
-              should: [
-                { terms: { countryId: organisationUnits } },
-                { terms: { regionId: organisationUnits } },
-                { terms: { districtId: organisationUnits } },
-                { terms: { subCountyId: organisationUnits } },
-                { terms: { id: organisationUnits } },
-              ],
-            },
-          },
-        };
-        let { data }: any = await api.post("wal/scroll", query);
-        let {
-          data: {
-            hits: { hits: facilities },
-          },
-        } = await api.post("wal/search", unitQuery);
-        facilities = facilities.map((f: any) => f._source);
-        console.log(facilities);
-        data = data.map(({ tei, event, ...others }: any) => {
-          if (tei) {
-            const facility = facilities.find((f: any) => {
-              return (
-                [
-                  f.countryId,
-                  f.regionId,
-                  f.districtId,
-                  f.subCountyId,
-                  f.id,
-                ].indexOf(tei.regorgunit) !== -1
-              );
-            });
-
-            if (facility) {
-              tei = {
-                ...tei,
-                regorgunitname: [
-                  // facility.countryName,
-                  // facility.regionName,
-                  facility.districtName,
-                  facility.subCountyName,
-                  facility.name,
-                ].join("/"),
-              };
-            }
-          }
-          if (event) {
-            const facility = facilities.find((f: any) => {
-              return (
-                [
-                  f.countryId,
-                  f.regionId,
-                  f.districtId,
-                  f.subCountyId,
-                  f.id,
-                ].indexOf(event.orgunit) !== -1
-              );
-            });
-
-            if (facility) {
-              event = {
-                ...event,
-                orgunitname: [
-                  // facility.countryName,
-                  // facility.regionName,
-                  facility.districtName,
-                  facility.subCountyName,
-                  facility.name,
-                ].join("/"),
-              };
-            }
-          }
-
-          return { ...others, event, tei };
-        });
-        return data;
-      } else {
-        return [];
       }
+
+      if (username) {
+        must = [
+          ...must,
+          {
+            multi_match: {
+              query: String(username).toLowerCase(),
+            },
+          },
+        ];
+      }
+      const query = {
+        index: "epivac",
+        track_total_hits: true,
+        from: (page - 1) * pageSize,
+        size: pageSize,
+        sort: [
+          {
+            event_last_updated: {
+              order: "asc",
+              format: "strict_date_optional_time_nanos",
+              numeric_type: "date_nanos",
+            },
+          },
+        ],
+        query: {
+          bool: {
+            must,
+          },
+        },
+      };
+
+      const unitQuery = {
+        index: "facilities",
+        size: 10000,
+        query: facilityQuery,
+      };
+      let {
+        data: {
+          hits: {
+            total: { value },
+            hits: records,
+          },
+        },
+      }: any = await api.post("wal/search", query);
+      let {
+        data: {
+          hits: { hits: facilities },
+        },
+      } = await api.post("wal/search", unitQuery);
+      facilities = facilities.map((f: any) => f._source);
+
+      const allRecords = records.map(({ _source }: any) => {
+        const facility = facilities.find((f: any) => {
+          return (
+            [
+              f.countryId,
+              f.regionId,
+              f.districtId,
+              f.subCountyId,
+              f.id,
+            ].indexOf(_source.regorgunit) !== -1
+          );
+        });
+
+        if (facility) {
+          _source = {
+            ..._source,
+            regorgunitname: [
+              facility.districtName,
+              facility.subCountyName,
+              facility.name,
+            ].join("/"),
+          };
+        }
+        const eventFacility = facilities.find((f: any) => {
+          return (
+            [
+              f.countryId,
+              f.regionId,
+              f.districtId,
+              f.subCountyId,
+              f.id,
+            ].indexOf(_source.orgunit) !== -1
+          );
+        });
+
+        if (eventFacility) {
+          _source = {
+            ..._source,
+            orgunitname: [
+              facility.districtName,
+              facility.subCountyName,
+              facility.name,
+            ].join("/"),
+          };
+        }
+        return _source;
+      });
+      return { allRecords, total: value };
     }
   );
 }
@@ -546,7 +580,7 @@ export function useEs(
               should: [
                 {
                   range: {
-                    "LUIsbsm3okG.created": {
+                    LUIsbsm3okG_created: {
                       lte: endDate,
                       gte: startDate,
                     },
@@ -554,7 +588,7 @@ export function useEs(
                 },
                 {
                   range: {
-                    "bbnyNYD1wgS.created": {
+                    bbnyNYD1wgS_created: {
                       lte: endDate,
                       gte: startDate,
                     },
@@ -563,31 +597,31 @@ export function useEs(
               ],
             },
           },
-          {
-            bool: {
-              should: [
-                { terms: { "event.level1": organisationUnits } },
-                { terms: { "event.level2": organisationUnits } },
-                { terms: { "event.level3": organisationUnits } },
-                { terms: { "event.level4": organisationUnits } },
-                { terms: { "event.level5": organisationUnits } },
-              ],
-            },
-          },
-          { terms: { "event.status": ["active", "completed"] } },
+          // {
+          //   bool: {
+          //     should: [
+          //       { terms: { event_level1: organisationUnits } },
+          //       { terms: { event_level2: organisationUnits } },
+          //       { terms: { event_level3: organisationUnits } },
+          //       { terms: { event_level4: organisationUnits } },
+          //       { terms: { event_level5: organisationUnits } },
+          //     ],
+          //   },
+          // },
+          { terms: { event_status: ["active", "completed"] } },
           {
             match: {
-              "event.deleted": false,
+              same_user: true,
             },
           },
           {
             exists: {
-              field: "bbnyNYD1wgS.value",
+              field: "bbnyNYD1wgS",
             },
           },
           {
             exists: {
-              field: "LUIsbsm3okG.value",
+              field: "LUIsbsm3okG",
             },
           },
         ];
@@ -596,14 +630,12 @@ export function useEs(
             ...must,
             {
               match: {
-                "LUIsbsm3okG.createdByUserInfo.username":
-                  String(q).toLowerCase(),
+                bbnyNYD1wgS_created_by: String(q).toLowerCase(),
               },
             },
             {
               match: {
-                "bbnyNYD1wgS.createdByUserInfo.username":
-                  String(q).toLowerCase(),
+                LUIsbsm3okG_created_by: String(q).toLowerCase(),
               },
             },
           ];
@@ -616,28 +648,15 @@ export function useEs(
             },
           },
           aggs: {
-            dose: {
+            summary: {
               terms: {
-                field: "LUIsbsm3okG.createdByUserInfo.username.keyword",
+                field: "bbnyNYD1wgS_created_by.keyword",
                 size: 10000,
               },
               aggs: {
                 status: {
                   terms: {
-                    field: "event.status.keyword",
-                  },
-                },
-              },
-            },
-            vaccine: {
-              terms: {
-                field: "bbnyNYD1wgS.createdByUserInfo.username.keyword",
-                size: 10000,
-              },
-              aggs: {
-                status: {
-                  terms: {
-                    field: "event.status.keyword",
+                    field: "event_status.keyword",
                   },
                 },
               },
@@ -647,7 +666,7 @@ export function useEs(
         const { data }: any = await api.post("wal", query);
         return data;
       }
-      return { vaccine: { buckets: [] }, dose: { buckets: [] } };
+      return { summary: { buckets: [] } };
     }
   );
 }

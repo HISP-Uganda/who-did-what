@@ -2,6 +2,14 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import App from "./components/App";
 
+window.addEventListener(
+  "contextmenu",
+  function (e) {
+    e.preventDefault();
+  },
+  false
+);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

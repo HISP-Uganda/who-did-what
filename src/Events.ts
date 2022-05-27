@@ -20,3 +20,6 @@ export const changeUsers = domain.createEvent<{ [k: string]: any }>();
 export const changeDistricts = domain.createEvent<{ [k: string]: string }>();
 export const setExpandedKeys = domain.createEvent<string[]>();
 export const setSelected = domain.createEvent<any[]>();
+export const changePage = domain.createEvent<number>();
+export const changePageSize = domain.createEvent<number>();
+export const changeSelectedOu = domain.createEvent<string>();

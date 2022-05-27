@@ -9,105 +9,83 @@ import { uniqBy } from "lodash";
 
 type OrgUnitTreeProps = {
   initial: any[];
-  expandedKeys: string[];
-  onChange: (value: string[]) => void;
-  value: string[];
+  // expandedKeys: string[];
+  onChange: (value: any) => void;
+  value: any;
+  multiple: boolean;
 };
 
 const OrgUnitTree = ({
   initial,
-  expandedKeys,
+  // expandedKeys,
   onChange,
   value,
+  multiple,
 }: OrgUnitTreeProps) => {
   const engine = useDataEngine();
   const [treeData, setTreeData] = useState<any[]>(initial);
-  const [expanded, setExpanded] = useState<React.Key[]>(expandedKeys);
+  // const [expanded, setExpanded] = useState<React.Key[]>(expandedKeys);
   const onLoadData = async (parent: any) => {
     try {
-      const parentChildren = treeData.find((t) => t.pId === parent.id);
-      if (parentChildren === undefined) {
-        const {
-          units: { organisationUnits },
-        }: any = await engine.query({
-          units: {
-            resource: "organisationUnits.json",
-            params: {
-              filter: `id:in:[${parent.id}]`,
-              paging: "false",
-              order: "shortName:desc",
-              fields: "children[id,name,path,leaf]",
-            },
+      const {
+        units: { organisationUnits },
+      }: any = await engine.query({
+        units: {
+          resource: "organisationUnits.json",
+          params: {
+            filter: `id:in:[${parent.value}]`,
+            paging: "false",
+            order: "shortName:desc",
+            fields: "children[id,name,path,leaf]",
           },
-        });
-        const found = organisationUnits.map((unit: any) => {
-          return unit.children
-            .map((child: any) => {
-              return {
-                id: child.id,
-                pId: parent.id,
-                value: child.id,
-                title: child.name,
-                isLeaf: child.leaf,
-                _key: child.id,
-              };
-            })
-            .sort((a: any, b: any) => {
-              if (a.title > b.title) {
-                return 1;
-              }
-              if (a.title < b.title) {
-                return -1;
-              }
-              return 0;
-            });
-        });
-        const all: any[] = uniqBy(
-          [
-            ...treeData.map((a: any) => {
-              return { ...a, _key: a.id };
-            }),
-            ...flatten(found),
-          ],
-          "id"
-        );
-        db.collection("facilities").set(all, {
-          keys: true,
-        });
-        setTreeData(all);
-      }
+        },
+      });
+      const found = organisationUnits.map((unit: any) => {
+        return unit.children
+          .map((child: any) => {
+            return {
+              pId: parent.value,
+              value: child.id,
+              key: child.id,
+              title: child.name,
+              isLeaf: child.leaf,
+            };
+          })
+          .sort((a: any, b: any) => {
+            if (a.title > b.title) {
+              return 1;
+            }
+            if (a.title < b.title) {
+              return -1;
+            }
+            return 0;
+          });
+      });
+      const all: any[] = uniqBy([...treeData, ...flatten(found)], "value");
+      // db.collection("facilities").set(all);
+      setTreeData(all);
     } catch (e) {
       console.log(e);
     }
   };
   const onTreeExpand = (expandedKeys: React.Key[]) => {
-    db.collection("expanded").set(
-      expandedKeys.map((k) => {
-        return {
-          value: k,
-          _key: k,
-        };
-      }),
-      {
-        keys: true,
-      }
-    );
-    setExpanded(expandedKeys);
+    // db.collection("expanded").set(expandedKeys);
+    // setExpanded(expandedKeys);
   };
   return (
     <Stack w="300px">
       <TreeSelect
         allowClear={true}
-        multiple={true}
+        multiple={multiple}
         treeDataSimpleMode
         size="large"
         style={{ width: "100%" }}
         value={value}
-        treeCheckable={true}
-        treeCheckStrictly={true}
+        // treeCheckable={multiple}
+        // treeCheckStrictly={multiple}
         listHeight={700}
-        treeExpandedKeys={expanded}
-        onTreeExpand={onTreeExpand}
+        // treeExpandedKeys={expanded}
+        // onTreeExpand={onTreeExpand}
         dropdownStyle={{ overflow: "auto" }}
         placeholder="Please select health centre"
         onChange={onChange}

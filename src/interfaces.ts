@@ -35,6 +35,7 @@ export interface Store {
   districts: { [k: string]: string };
   expandedKeys: string[];
   selected: any[];
+  selectedOu: any;
 }
 export interface ProgramSetting {
   program: string;

@@ -27,9 +27,11 @@ import { useStore } from "effector-react";
 import { ChangeEvent } from "react";
 import { $store } from "../Store";
 import { columns } from "../utils";
+import { changePage, changePageSize } from "../Events";
 
 type AppProps = {
   data: any;
+  total: number;
 };
 
 export const innerColumns = (index: number) => {
@@ -92,8 +94,7 @@ export const otherRows = (index: number, bg: string = "white") => {
   } as any;
 };
 
-const DetailsTable = ({ data }: AppProps) => {
-  const store = useStore($store);
+const DetailsTable = ({ data, total }: AppProps) => {
   const {
     pages,
     pagesCount,
@@ -103,19 +104,20 @@ const DetailsTable = ({ data }: AppProps) => {
     pageSize,
     setPageSize,
   } = usePagination({
-    total: data.length,
+    total,
     limits: {
       outer: 4,
       inner: 4,
     },
     initialState: {
-      pageSize: 20,
+      pageSize: 25,
       currentPage: 1,
     },
   });
 
   const handlePageChange = (nextPage: number): void => {
     setCurrentPage(nextPage);
+    changePage(nextPage);
   };
 
   const handlePageSizeChange = (
@@ -124,6 +126,8 @@ const DetailsTable = ({ data }: AppProps) => {
     const pageSize = Number(event.target.value);
     setPageSize(pageSize);
     setCurrentPage(1);
+    changePage(1);
+    changePageSize(pageSize);
   };
   return (
     <Box m="auto" w="100%">
@@ -132,6 +136,14 @@ const DetailsTable = ({ data }: AppProps) => {
         overflow="auto"
         whiteSpace="nowrap"
         h="calc(100vh - 325px)"
+        // __css={{
+        //   "-webkit-touch-callout": "none",
+        //   "-webkit-user-select": "none",
+        //   "-khtml-user-select": "none",
+        //   " -moz-user-select": "none",
+        //   "-ms-user-select": "none",
+        //   "user-select": "none",
+        // }}
       >
         <Table variant="striped" size="sm" colorScheme="gray">
           <Thead>
@@ -146,17 +158,15 @@ const DetailsTable = ({ data }: AppProps) => {
             </Tr>
           </Thead>
           <Tbody>
-            {data
-              .slice(currentPage * pageSize - pageSize, pageSize * currentPage)
-              .map((h: any) => (
-                <Tr key={h.id}>
-                  {columns.map((c, index) => (
-                    <Td key={c.id} {...innerColumns(index)}>
-                      {get(h, c.id, "")}
-                    </Td>
-                  ))}
-                </Tr>
-              ))}
+            {data.map((h: any) => (
+              <Tr key={h.id}>
+                {columns.map((c, index) => (
+                  <Td key={c.id} {...innerColumns(index)}>
+                    {get(h, c.id, "")}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
           </Tbody>
         </Table>
       </Box>
@@ -226,6 +236,7 @@ const DetailsTable = ({ data }: AppProps) => {
         <Select ml={3} onChange={handlePageSizeChange} w={40} value={pageSize}>
           <option value="5">5</option>
           <option value="10">10</option>
+          <option value="20">20</option>
           <option value="25">25</option>
           <option value="50">50</option>
         </Select>

@@ -16,8 +16,26 @@ import {
   changeDistricts,
   setExpandedKeys,
   setSelected,
+  changePage,
+  changePageSize,
+  changeSelectedOu,
 } from "./Events";
 import { Store } from "./interfaces";
+
+export const $pagination = domain
+  .createStore<{
+    pageSize: number;
+    page: number;
+  }>({
+    pageSize: 25,
+    page: 1,
+  })
+  .on(changePage, (state, page) => {
+    return { ...state, page };
+  })
+  .on(changePageSize, (state, pageSize) => {
+    return { ...state, pageSize };
+  });
 
 export const $store = domain
   .createStore<Store>({
@@ -34,6 +52,7 @@ export const $store = domain
     districts: {},
     expandedKeys: [],
     selected: [],
+    selectedOu: {},
   })
   .on(changeTotal, (state, total) => {
     return { ...state, total: { ...state.total, ...total } };
@@ -87,6 +106,9 @@ export const $store = domain
   })
   .on(setSelected, (state, selected) => {
     return { ...state, selected };
+  })
+  .on(changeSelectedOu, (state, selectedOu) => {
+    return { ...state, selectedOu };
   });
 
 export const $trackerPrograms = $store.map(({ programs }) => {

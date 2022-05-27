@@ -16,7 +16,7 @@ import { ChangeEvent, useState } from "react";
 import * as XLSX from "xlsx";
 import { useEs } from "../Queries";
 import { $store } from "../Store";
-import { findAllUsers, findRecord } from "../utils";
+import { findCompleted } from "../utils";
 import PaginatedTable from "./PaginatedTable";
 
 const { RangePicker } = DatePicker;
@@ -47,18 +47,7 @@ const EventsStat = () => {
     store.organisationUnits.map((o: any) => String(o.id).toLowerCase())
   );
 
-  const findCompleted = (row: any) => {
-    const found = row.status.buckets.find(
-      (bucket: any) => bucket.key === "COMPLETED"
-    );
-    if (found) {
-      return found.doc_count;
-    }
-    return 0;
-  };
-
   const downloadEvents = async () => {
-    const allUsers = findAllUsers(data);
     setQuery(q);
     setSelectedDate([
       date[0].format("YYYY-MM-DD"),
@@ -71,32 +60,16 @@ const EventsStat = () => {
         "Username",
         "Full Name",
         "Contact",
-        "Doses Created",
-        "Doses Completed",
-        "Vaccines Created",
-        "Vaccines Completed",
         "Events Created",
         "Events Completed",
       ],
-      ...allUsers.map((user: string) => {
-        const {
-          doses,
-          vaccines,
-          completedDose,
-          completedVaccine,
-          totalCompleted,
-          total,
-        } = findRecord(data, user);
+      ...data.summary.buckets.map((r: any) => {
         return [
-          user,
-          store.users[user]?.displayName,
-          store.users[user]?.phoneNumber,
-          doses,
-          completedDose,
-          vaccines,
-          completedVaccine,
-          total,
-          totalCompleted,
+          r.key,
+          store.users[r.key]?.displayName,
+          store.users[r.key]?.phoneNumber,
+          r.doc_count,
+          findCompleted(r),
         ];
       }),
     ];
@@ -131,10 +104,7 @@ const EventsStat = () => {
           colorScheme="blue"
           onClick={downloadEvents}
           isLoading={downloading}
-          isDisabled={
-            data?.vaccine.buckets.length === 0 &&
-            data?.dose.buckets.length === 0
-          }
+          isDisabled={data?.summary.buckets.length === 0}
         >
           Download
         </Button>

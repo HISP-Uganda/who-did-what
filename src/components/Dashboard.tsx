@@ -1,10 +1,9 @@
-import {
-  Flex, Grid,
-  GridItem, HStack, Stack, Text
-} from "@chakra-ui/react";
+import { Flex, Grid, GridItem, HStack, Stack, Text } from "@chakra-ui/react";
 import { useStore } from "effector-react";
-import { useDashboard } from "../Queries";
+import { changeSelectedOu } from "../Events";
+import { db, useDashboard } from "../Queries";
 import { $store } from "../Store";
+import OrgUnitTree from "./OrgUnitTree";
 
 export const formatter = Intl.NumberFormat("en", {
   notation: "standard",
@@ -55,12 +54,22 @@ const ST = ({
 
 const Dashboard = () => {
   const store = useStore($store);
-
   const { isLoading, isSuccess, isError, data, error } = useDashboard(
-    store.organisationUnits.map((o) => o.id)
+    store.selectedOu.value
   );
+  const onChange = (value: any) => {
+    changeSelectedOu(value);
+    // db.collection("facility").set([value]);
+  };
   return (
     <Stack p="5px">
+      {/* <OrgUnitTree
+        multiple={false}
+        value={store.selectedOu}
+        onChange={onChange}
+        // expandedKeys={store.expandedKeys}
+        initial={store.organisationUnits}
+      /> */}
       {isLoading && <div>Loading</div>}
       {isSuccess && (
         <Grid
