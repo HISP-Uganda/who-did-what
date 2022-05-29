@@ -1,15 +1,13 @@
 import { Stack } from "@chakra-ui/react";
 import { useDataEngine } from "@dhis2/app-runtime";
-import { flatten } from "lodash";
-import "antd/dist/antd.css";
 import { TreeSelect } from "antd";
-import { useState } from "react";
-import { db } from "../Queries";
 import { uniqBy } from "lodash";
+import { useState } from "react";
+
+import "antd/dist/antd.css";
 
 type OrgUnitTreeProps = {
   initial: any[];
-  // expandedKeys: string[];
   onChange: (value: any) => void;
   value: any;
   multiple: boolean;
@@ -40,10 +38,11 @@ const OrgUnitTree = ({
           },
         },
       });
-      const found = organisationUnits.map((unit: any) => {
+      const found = organisationUnits.flatMap((unit: any) => {
         return unit.children
           .map((child: any) => {
             return {
+              id: child.id,
               pId: parent.value,
               value: child.id,
               key: child.id,
@@ -61,16 +60,11 @@ const OrgUnitTree = ({
             return 0;
           });
       });
-      const all: any[] = uniqBy([...treeData, ...flatten(found)], "value");
-      // db.collection("facilities").set(all);
+      const all: any[] = uniqBy([...treeData, ...found], "value");
       setTreeData(all);
     } catch (e) {
       console.log(e);
     }
-  };
-  const onTreeExpand = (expandedKeys: React.Key[]) => {
-    // db.collection("expanded").set(expandedKeys);
-    // setExpanded(expandedKeys);
   };
   return (
     <Stack w="300px">

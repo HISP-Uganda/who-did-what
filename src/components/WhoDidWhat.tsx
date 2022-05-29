@@ -1,60 +1,86 @@
-import { Button, Input, Spinner, Stack } from "@chakra-ui/react";
+import { Button, Input, Spacer, Spinner, Stack } from "@chakra-ui/react";
 import { DatePicker } from "antd";
+import * as XLSX from "xlsx";
 import "antd/dist/antd.css";
 import { useStore } from "effector-react";
-import { get } from "lodash";
 import moment from "moment";
 import { ChangeEvent, useState } from "react";
-import * as XLSX from "xlsx";
 import { setSelected } from "../Events";
-import { db, useWhoDidWhat } from "../Queries";
-import { $pagination, $store } from "../Store";
-import { columns } from "../utils";
+import { useWhoDidWhat, downloadDetails } from "../Queries";
+import { $canDownload, $pagination, $store } from "../Store";
 import DetailsTable from "./DetailsTable";
 import OrgUnitTree from "./OrgUnitTree";
+import { columns } from "../utils";
+import { get } from "lodash";
 
 const { RangePicker } = DatePicker;
 
 const WhoDidWhat = () => {
   const store = useStore($store);
   const pagination = useStore($pagination);
-  const [date, setDate] = useState<[any, any]>([moment(), moment()]);
-  const [orgUnits, setCurrentOrgUnits] = useState<string[]>([]);
-  const [selectedDate, setSelectedDate] = useState<[string, string]>([
-    date[0].format("YYYY-MM-DD"),
-    date[1].format("YYYY-MM-DD"),
+  const canDownload = useStore($canDownload);
+  const [downloading, setDownloading] = useState<boolean>(false);
+  const [date, setDate] = useState<[any, any] | undefined>([
+    moment(),
+    moment(),
   ]);
+  const [orgUnits, setCurrentOrgUnits] = useState<string[]>(
+    store.selected.map((v) => String(v).toLowerCase())
+  );
+  const [selectedDates, setSelectedDates] = useState<
+    [string, string] | undefined
+  >(
+    !!date
+      ? [date[0].format("YYYY-MM-DD"), date[1].format("YYYY-MM-DD")]
+      : undefined
+  );
   const [query, setQuery] = useState<string>("");
   const [q, setQ] = useState<string>("");
 
   const changeSearch = () => {
     setQuery(q);
-    setCurrentOrgUnits(
-      store.selected.map((v: any) => String(v.value).toLowerCase())
-    );
+    setCurrentOrgUnits(store.selected.map((v) => String(v).toLowerCase()));
     if (date) {
-      setSelectedDate([
+      setSelectedDates([
         date[0].format("YYYY-MM-DD"),
         date[1].format("YYYY-MM-DD"),
       ]);
     } else {
-      setSelectedDate(["", ""]);
+      setSelectedDates(undefined);
     }
   };
 
   const setOrgUnits = (values: any[]) => {
     setSelected(values);
-    // db.collection("selected").set(values);
   };
   const { isLoading, isSuccess, isError, data, error } = useWhoDidWhat(
     orgUnits,
     pagination.page,
     pagination.pageSize,
-    selectedDate[0],
-    selectedDate[1],
+    selectedDates,
     query
   );
 
+  const download = async () => {
+    setDownloading(true);
+    changeSearch();
+
+    const currentData = await downloadDetails(orgUnits, selectedDates, query);
+
+    const all = [
+      columns.map((c) => c.name),
+      ...currentData.map((r: any) => {
+        return columns.map((c) => get(r, c.id, ""));
+      }),
+    ];
+    const sheetName = "Details";
+    const filename = `Details-${orgUnits.join("-")}.xlsx`;
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(all);
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+    setDownloading(false);
+  };
   return (
     <Stack p="20px">
       <Stack direction="row">
@@ -69,12 +95,21 @@ const WhoDidWhat = () => {
           multiple={true}
           value={store.selected}
           onChange={setOrgUnits}
-          // expandedKeys={store.expandedKeys}
           initial={store.organisationUnits}
         />
         <Button colorScheme="blue" onClick={changeSearch} isLoading={isLoading}>
           Submit
         </Button>
+        <Spacer />
+        {canDownload && (
+          <Button
+            colorScheme="blue"
+            onClick={download}
+            isLoading={downloading || isLoading}
+          >
+            Download
+          </Button>
+        )}
       </Stack>
       {isLoading && <Spinner />}
       {isSuccess && <DetailsTable data={data.allRecords} total={data.total} />}

@@ -1,4 +1,4 @@
-import { isEmpty } from "lodash";
+import { intersection, isEmpty } from "lodash";
 import { domain } from "./Domains";
 import {
   changeTotal,
@@ -19,6 +19,7 @@ import {
   changePage,
   changePageSize,
   changeSelectedOu,
+  changeUserGroups,
 } from "./Events";
 import { Store } from "./interfaces";
 
@@ -52,6 +53,7 @@ export const $store = domain
     districts: {},
     expandedKeys: [],
     selected: [],
+    userGroups: [],
     selectedOu: {},
   })
   .on(changeTotal, (state, total) => {
@@ -109,6 +111,9 @@ export const $store = domain
   })
   .on(changeSelectedOu, (state, selectedOu) => {
     return { ...state, selectedOu };
+  })
+  .on(changeUserGroups, (state, userGroups) => {
+    return { ...state, userGroups };
   });
 
 export const $trackerPrograms = $store.map(({ programs }) => {
@@ -145,4 +150,8 @@ export const $dataElements = $store.map(({ program, stage }) => {
     }
   }
   return [];
+});
+
+export const $canDownload = $store.map(({ userGroups }) => {
+  return intersection(userGroups, ["RIpQlyW6TQH", "HB77j3OzP5K"]).length > 0;
 });

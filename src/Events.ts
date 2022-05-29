@@ -23,3 +23,4 @@ export const setSelected = domain.createEvent<any[]>();
 export const changePage = domain.createEvent<number>();
 export const changePageSize = domain.createEvent<number>();
 export const changeSelectedOu = domain.createEvent<string>();
+export const changeUserGroups = domain.createEvent<string[]>();

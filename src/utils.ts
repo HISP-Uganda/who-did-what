@@ -169,6 +169,10 @@ export const processEvents = ({ listGrid: { rows, headers } }: any) => {
 };
 
 export const columns = [
+  // {
+  //   name: "ID",
+  //   id: "id",
+  // },
   {
     name: "Vaccination Card No",
     id: "hDdStedsrHN",
@@ -262,6 +266,10 @@ export const columns = [
     id: "regorgunitname",
   },
   {
+    name: "Vaccination facility",
+    id: "orgunitname",
+  },
+  {
     name: "Date of Vaccination",
     id: "event_execution_date",
   },
@@ -349,10 +357,6 @@ export const columns = [
   {
     name: "Dose Number",
     id: "LUIsbsm3okG",
-  },
-  {
-    name: "Vaccination facility",
-    id: "orgunitname",
   },
   {
     name: "Event Status",

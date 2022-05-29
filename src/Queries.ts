@@ -1,16 +1,16 @@
 import { useDataEngine } from "@dhis2/app-runtime";
-import { fromPairs, isEmpty } from "lodash";
-import { useQuery } from "react-query";
 import axios from "axios";
-import * as XLSX from "xlsx";
 import Localbase from "localbase";
+import { fromPairs } from "lodash";
+import { useQuery } from "react-query";
+import * as XLSX from "xlsx";
 import {
   changeDistricts,
   changeOu,
   changeProgram,
   changeSelectedOu,
   changeTotal,
-  changeTypes,
+  changeUserGroups,
   changeUsers,
   setExpandedKeys,
   setSelected,
@@ -20,7 +20,7 @@ export const api = axios.create({
   // baseURL: "http://localhost:3001/",
   baseURL: "https://services.dhis2.hispuganda.org/",
 });
-export const db = new Localbase("facilities");
+// export const db = new Localbase("facilities");
 
 // export const useInitials = () => {
 //   const engine = useDataEngine();
@@ -94,7 +94,7 @@ export function useLoader() {
     me: {
       resource: "me.json",
       params: {
-        fields: "organisationUnits[id,name,leaf,level]",
+        fields: "organisationUnits[id,name,leaf,level],userGroups",
       },
     },
   };
@@ -114,10 +114,11 @@ export function useLoader() {
     // }
     // } else {
     const {
-      me: { organisationUnits },
+      me: { organisationUnits, userGroups },
     }: any = await engine.query(ouQuery);
     const facilities: any[] = organisationUnits.map((unit: any) => {
       return {
+        id: unit.id,
         pId: unit.pId || "",
         key: unit.id,
         value: unit.id,
@@ -145,9 +146,10 @@ export function useLoader() {
     //     { keys: true }
     //   )
     // );
+    changeUserGroups(userGroups.map((group: any) => group.id));
     changeOu(facilities);
     changeSelectedOu(facilities[0]);
-    setSelected(facilities);
+    setSelected(facilities.map((v) => v.id));
     setExpandedKeys([]);
     // }
     const {
@@ -324,45 +326,54 @@ export function useDistricts(
   username = ""
 ) {
   return useQuery<any, Error>(
-    ["es", startDate, endDate, username],
+    ["district-summaries", startDate, endDate, username],
     async () => {
       if (startDate && endDate) {
         let must: any[] = [
           {
-            range: {
-              created: {
-                lte: endDate,
-                gte: startDate,
-              },
+            bool: {
+              should: [
+                {
+                  range: {
+                    LUIsbsm3okG_created: {
+                      lte: endDate,
+                      gte: startDate,
+                    },
+                  },
+                },
+                {
+                  range: {
+                    bbnyNYD1wgS_created: {
+                      lte: endDate,
+                      gte: startDate,
+                    },
+                  },
+                },
+              ],
             },
           },
           {
             bool: {
               should: [
-                { terms: { "path.national": organisationUnits } },
-                { terms: { "path.region": organisationUnits } },
-                { terms: { "path.district": organisationUnits } },
-                { terms: { "path.subcounty": organisationUnits } },
-                { terms: { "path.facility": organisationUnits } },
+                { terms: { event_level1: organisationUnits } },
+                { terms: { event_level2: organisationUnits } },
+                { terms: { event_level3: organisationUnits } },
+                { terms: { event_level4: organisationUnits } },
+                { terms: { event_level5: organisationUnits } },
               ],
             },
           },
-          { terms: { status: ["active", "completed"] } },
           {
-            match: {
-              deleted: false,
+            exists: {
+              field: "bbnyNYD1wgS",
             },
           },
           {
             exists: {
-              field: "dose",
+              field: "LUIsbsm3okG",
             },
           },
-          {
-            exists: {
-              field: "vaccine",
-            },
-          },
+          { terms: { event_status: ["active", "completed"] } },
         ];
 
         if (username) {
@@ -370,14 +381,24 @@ export function useDistricts(
             ...must,
             {
               match: {
-                storedby: String(username).toLowerCase(),
+                bbnyNYD1wgS_created_by: String(username).toLowerCase(),
+              },
+            },
+            {
+              match: {
+                LUIsbsm3okG_created_by: String(username).toLowerCase(),
+              },
+            },
+            {
+              match: {
+                same_user: true,
               },
             },
           ];
         }
 
         const query = {
-          index: "programstageinstance",
+          index: "epivac",
           query: {
             bool: {
               must,
@@ -386,13 +407,13 @@ export function useDistricts(
           aggs: {
             summary: {
               terms: {
-                field: "path.district.keyword",
+                field: "event_level3.keyword",
                 size: 10000,
               },
               aggs: {
                 status: {
                   terms: {
-                    field: "status.keyword",
+                    field: "event_status.keyword",
                   },
                 },
               },
@@ -407,27 +428,196 @@ export function useDistricts(
   );
 }
 
+export async function downloadDetails(
+  organisationUnits: string[],
+  selectedDates: [string, string] | undefined,
+  username = ""
+) {
+  let must: any[] = [
+    {
+      match: {
+        event_deleted: false,
+      },
+    },
+    {
+      match: {
+        tei_deleted: false,
+      },
+    },
+    {
+      match: {
+        pi_deleted: false,
+      },
+    },
+  ];
+  let facilityQuery: any = { match_all: {} };
+  if (selectedDates) {
+    must = [
+      ...must,
+      {
+        range: {
+          event_last_updated: {
+            gte: selectedDates[0],
+            lte: selectedDates[1],
+          },
+        },
+      },
+    ];
+  }
+  if (organisationUnits && organisationUnits.length > 0) {
+    must = [
+      ...must,
+      {
+        bool: {
+          should: [
+            { terms: { event_level1: organisationUnits } },
+            { terms: { event_level2: organisationUnits } },
+            { terms: { event_level3: organisationUnits } },
+            { terms: { event_level4: organisationUnits } },
+            { terms: { event_level5: organisationUnits } },
+          ],
+        },
+      },
+    ];
+    facilityQuery = {
+      bool: {
+        should: [
+          { terms: { countryId: organisationUnits } },
+          { terms: { regionId: organisationUnits } },
+          { terms: { districtId: organisationUnits } },
+          { terms: { subCountyId: organisationUnits } },
+          { terms: { id: organisationUnits } },
+        ],
+      },
+    };
+  }
+
+  if (username) {
+    must = [
+      ...must,
+      {
+        multi_match: {
+          query: String(username).toLowerCase(),
+        },
+      },
+    ];
+  }
+  const query = {
+    index: "epivac",
+    sort: [
+      {
+        event_last_updated: {
+          order: "asc",
+          format: "strict_date_optional_time_nanos",
+          numeric_type: "date_nanos",
+        },
+      },
+    ],
+    query: {
+      bool: {
+        must,
+      },
+    },
+  };
+
+  const unitQuery = {
+    index: "facilities",
+    size: 10000,
+    query: facilityQuery,
+  };
+  let { data }: any = await api.post("wal/scroll", query);
+  let {
+    data: {
+      hits: { hits: facilities },
+    },
+  } = await api.post("wal/search", unitQuery);
+  facilities = facilities.map((f: any) => f._source);
+
+  const allRecords = data.map((_source: any) => {
+    const facility = facilities.find((f: any) => {
+      return (
+        [f.countryId, f.regionId, f.districtId, f.subCountyId, f.id].indexOf(
+          _source.regorgunit
+        ) !== -1
+      );
+    });
+
+    if (facility) {
+      _source = {
+        ..._source,
+        regorgunitname: [
+          facility.districtName,
+          facility.subCountyName,
+          facility.name,
+        ].join("/"),
+      };
+    }
+    const eventFacility = facilities.find((f: any) => {
+      return (
+        [f.countryId, f.regionId, f.districtId, f.subCountyId, f.id].indexOf(
+          _source.orgunit
+        ) !== -1
+      );
+    });
+
+    if (eventFacility) {
+      _source = {
+        ..._source,
+        orgunitname: [
+          eventFacility.districtName,
+          eventFacility.subCountyName,
+          eventFacility.name,
+        ].join("/"),
+      };
+    }
+    return _source;
+  });
+  return allRecords;
+}
+
 export function useWhoDidWhat(
   organisationUnits: string[],
   page = 1,
   pageSize = 20,
-  startDate = "",
-  endDate = "",
+  selectedDates: [string, string] | undefined,
   username = ""
 ) {
   return useQuery<any, Error>(
-    ["who-did-what", ...organisationUnits, startDate, endDate, username],
+    [
+      "who-did-what",
+      ...organisationUnits,
+      selectedDates,
+      username,
+      page,
+      pageSize,
+    ],
     async () => {
-      let must: any[] = [];
+      let must: any[] = [
+        {
+          match: {
+            event_deleted: false,
+          },
+        },
+        {
+          match: {
+            tei_deleted: false,
+          },
+        },
+        {
+          match: {
+            pi_deleted: false,
+          },
+        },
+      ];
       let facilityQuery: any = { match_all: {} };
-      if (startDate && endDate) {
+      if (selectedDates) {
         must = [
           ...must,
           {
             range: {
               event_last_updated: {
-                gte: startDate,
-                lte: endDate,
+                gte: selectedDates[0],
+                lte: selectedDates[1],
               },
             },
           },
@@ -551,9 +741,9 @@ export function useWhoDidWhat(
           _source = {
             ..._source,
             orgunitname: [
-              facility.districtName,
-              facility.subCountyName,
-              facility.name,
+              eventFacility.districtName,
+              eventFacility.subCountyName,
+              eventFacility.name,
             ].join("/"),
           };
         }
@@ -597,17 +787,17 @@ export function useEs(
               ],
             },
           },
-          // {
-          //   bool: {
-          //     should: [
-          //       { terms: { event_level1: organisationUnits } },
-          //       { terms: { event_level2: organisationUnits } },
-          //       { terms: { event_level3: organisationUnits } },
-          //       { terms: { event_level4: organisationUnits } },
-          //       { terms: { event_level5: organisationUnits } },
-          //     ],
-          //   },
-          // },
+          {
+            bool: {
+              should: [
+                { terms: { event_level1: organisationUnits } },
+                { terms: { event_level2: organisationUnits } },
+                { terms: { event_level3: organisationUnits } },
+                { terms: { event_level4: organisationUnits } },
+                { terms: { event_level5: organisationUnits } },
+              ],
+            },
+          },
           { terms: { event_status: ["active", "completed"] } },
           {
             match: {

@@ -36,7 +36,7 @@ const Totals = () => {
   ]);
 
   const { isLoading, isSuccess, isError, data, error } = useDistricts(
-    store.organisationUnits.map((o: any) => String(o.id).toLowerCase()),
+    store.organisationUnits.map((o: any) => String(o.value).toLowerCase()),
     selectedDate[0],
     selectedDate[1],
     username

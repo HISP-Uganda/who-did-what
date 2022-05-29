@@ -36,6 +36,7 @@ export interface Store {
   expandedKeys: string[];
   selected: any[];
   selectedOu: any;
+  userGroups: string[];
 }
 export interface ProgramSetting {
   program: string;
