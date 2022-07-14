@@ -42,7 +42,7 @@ const OUTER_LIMIT = 4;
 const INNER_LIMIT = 4;
 
 const EnrollmentsStat = () => {
-  return <Box>Coming soon</Box>
+  return <Box>Coming soon</Box>;
   // const [date, setDate] = useState<[any, any]>([moment(), moment()]);
   // const [selectedDate, setSelectedDate] = useState<[string, string]>([
   //   date[0].format("YYYY-MM-DD"),

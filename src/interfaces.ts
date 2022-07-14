@@ -37,6 +37,8 @@ export interface Store {
   selected: any[];
   selectedOu: any;
   userGroups: string[];
+  levels: { id: string; name: string; level: string }[];
+  selectedLevel: string;
 }
 export interface ProgramSetting {
   program: string;

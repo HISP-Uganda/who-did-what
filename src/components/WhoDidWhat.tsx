@@ -20,10 +20,7 @@ const WhoDidWhat = () => {
   const pagination = useStore($pagination);
   const canDownload = useStore($canDownload);
   const [downloading, setDownloading] = useState<boolean>(false);
-  const [date, setDate] = useState<[any, any] | undefined>([
-    moment(),
-    moment(),
-  ]);
+  const [date, setDate] = useState<any>([moment(), moment()]);
   const [orgUnits, setCurrentOrgUnits] = useState<string[]>(
     store.selected.map((v) => String(v).toLowerCase())
   );
@@ -90,7 +87,11 @@ const WhoDidWhat = () => {
           value={q}
           onChange={(e: ChangeEvent<HTMLInputElement>) => setQ(e.target.value)}
         />
-        <RangePicker size="large" value={date} onChange={setDate} />
+        <RangePicker
+          size="large"
+          value={date}
+          onChange={(data) => setDate(data)}
+        />
         <OrgUnitTree
           multiple={true}
           value={store.selected}

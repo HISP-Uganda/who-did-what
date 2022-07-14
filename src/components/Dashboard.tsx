@@ -1,7 +1,7 @@
 import { Flex, Grid, GridItem, HStack, Stack, Text } from "@chakra-ui/react";
 import { useStore } from "effector-react";
 import { changeSelectedOu } from "../Events";
-import { db, useDashboard } from "../Queries";
+import { useDashboard } from "../Queries";
 import { $store } from "../Store";
 import OrgUnitTree from "./OrgUnitTree";
 

@@ -20,6 +20,8 @@ import {
   changePageSize,
   changeSelectedOu,
   changeUserGroups,
+  setLevels,
+  setSelectedLevel,
 } from "./Events";
 import { Store } from "./interfaces";
 
@@ -55,6 +57,8 @@ export const $store = domain
     selected: [],
     userGroups: [],
     selectedOu: {},
+    levels: [],
+    selectedLevel: "",
   })
   .on(changeTotal, (state, total) => {
     return { ...state, total: { ...state.total, ...total } };
@@ -114,6 +118,13 @@ export const $store = domain
   })
   .on(changeUserGroups, (state, userGroups) => {
     return { ...state, userGroups };
+  })
+  .on(setLevels, (state, levels) => {
+    return { ...state, levels };
+  })
+  .on(setSelectedLevel, (state, selectedLevel) => {
+    console.log(selectedLevel);
+    return { ...state, selectedLevel };
   });
 
 export const $trackerPrograms = $store.map(({ programs }) => {

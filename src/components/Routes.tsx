@@ -6,9 +6,9 @@ import Totals from "./Totals";
 import WhoDidWhat from "./WhoDidWhat";
 
 export const Routes: Route[] = [
-  { path: "/", element: <Dashboard /> },
+  // { path: "/", element: <Dashboard /> },
   {
-    path: "/statistics",
+    path: "/",
     element: <Statistics />,
   },
   {

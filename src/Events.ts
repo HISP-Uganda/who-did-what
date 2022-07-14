@@ -24,3 +24,7 @@ export const changePage = domain.createEvent<number>();
 export const changePageSize = domain.createEvent<number>();
 export const changeSelectedOu = domain.createEvent<string>();
 export const changeUserGroups = domain.createEvent<string[]>();
+export const setLevels =
+  domain.createEvent<{ id: string; name: string; level: string }[]>();
+
+export const setSelectedLevel = domain.createEvent<string>();

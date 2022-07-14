@@ -1,6 +1,5 @@
 import { useDataEngine } from "@dhis2/app-runtime";
 import axios from "axios";
-import Localbase from "localbase";
 import { fromPairs } from "lodash";
 import { useQuery } from "react-query";
 import * as XLSX from "xlsx";
@@ -13,7 +12,9 @@ import {
   changeUserGroups,
   changeUsers,
   setExpandedKeys,
+  setLevels,
   setSelected,
+  setSelectedLevel,
 } from "./Events";
 
 export const api = axios.create({
@@ -89,6 +90,12 @@ export function useLoader() {
         paging: "false",
       },
     },
+    levels: {
+      resource: "organisationUnitLevels",
+      params: {
+        fields: "id,name,level",
+      },
+    },
   };
   const ouQuery = {
     me: {
@@ -126,6 +133,11 @@ export function useLoader() {
         isLeaf: unit.leaf,
       };
     });
+    const {
+      districts: { organisationUnits: ds },
+      users: { users },
+      levels: { organisationUnitLevels },
+    }: any = await engine.query(query);
     // await db.collection("facility").set(
     //   facilities.map((f) => {
     //     return { ...f, _key: f.value };
@@ -151,11 +163,10 @@ export function useLoader() {
     changeSelectedOu(facilities[0]);
     setSelected(facilities.map((v) => v.id));
     setExpandedKeys([]);
+    setLevels(organisationUnitLevels);
+    setSelectedLevel(organisationUnits[0].level);
     // }
-    const {
-      districts: { organisationUnits: ds },
-      users: { users },
-    }: any = await engine.query(query);
+
     const allUsers = users.map((u: any) => [
       u.userCredentials.username,
       { displayName: u.displayName, phoneNumber: u.phoneNumber },
@@ -216,6 +227,23 @@ export function useDoses(organisationUnits: string[]) {
     };
     const { data }: any = await api.post("wal", query);
     return data;
+  });
+}
+
+export function useOU(organisationUnit: string) {
+  const engine = useDataEngine();
+  return useQuery<any, Error>(["unit", organisationUnit], async () => {
+    const {
+      ou: { name },
+    }: any = await engine.query({
+      ou: {
+        resource: `organisationUnits/${organisationUnit}.json`,
+        params: {
+          fields: "name",
+        },
+      },
+    });
+    return name;
   });
 }
 
@@ -323,10 +351,18 @@ export function useDistricts(
   organisationUnits: string[],
   startDate = "",
   endDate = "",
-  username = ""
+  username = "",
+  level = ""
 ) {
   return useQuery<any, Error>(
-    ["district-summaries", startDate, endDate, username],
+    [
+      "district-summaries",
+      startDate,
+      endDate,
+      username,
+      ...organisationUnits,
+      level,
+    ],
     async () => {
       if (startDate && endDate) {
         let must: any[] = [
@@ -407,7 +443,7 @@ export function useDistricts(
           aggs: {
             summary: {
               terms: {
-                field: "event_level3.keyword",
+                field: `event_level${level}.keyword`,
                 size: 10000,
               },
               aggs: {
