@@ -29,7 +29,7 @@ const App = () => {
             textTransform="uppercase"
             fontSize="35px"
           >
-            <Grid templateColumns="repeat(3, 1fr)" w={"full"} gap={1}>
+            <Grid templateColumns="repeat(4, 1fr)" w={"full"} gap={1}>
               {/* <Link
                 to="/"
                 getActiveProps={() => ({
@@ -90,7 +90,7 @@ const App = () => {
                   District Summary
                 </Button>
               </Link>
-              {/* <Link
+              <Link
                 to="/interrogation"
                 getActiveProps={() => ({
                   style: { color: "#4299E1" },
@@ -103,9 +103,9 @@ const App = () => {
                   textTransform="uppercase"
                   w="100%"
                 >
-                  Interrogation
+                  Download With Unknown names
                 </Button>
-              </Link> */}
+              </Link>
             </Grid>
           </Stack>
           <Outlet />

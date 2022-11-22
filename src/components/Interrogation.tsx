@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const Interrogation = () => {
-  return (
-    <div>Interrogation</div>
-  )
-}
+  return <div>Interrogation</div>;
+};
 
-export default Interrogation
+export default Interrogation;

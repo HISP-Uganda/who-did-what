@@ -169,10 +169,10 @@ export const processEvents = ({ listGrid: { rows, headers } }: any) => {
 };
 
 export const columns = [
-  // {
-  //   name: "ID",
-  //   id: "id",
-  // },
+  {
+    name: "ID",
+    id: "id",
+  },
   {
     name: "Vaccination Card No",
     id: "hDdStedsrHN",
@@ -427,6 +427,19 @@ export const columns = [
   //   name: "Elsewhere dose number",
   //   id: "AoHMuBgBlkc",
   // },
+
+  {
+    name: "PI Deleted",
+    id: "pi_deleted",
+  },
+  {
+    name: "TEI Deleted",
+    id: "tei_deleted",
+  },
+  {
+    name: "PSI Deleted",
+    id: "psi_deleted",
+  },
 ];
 
 export const findAllUsers = (data: any) => {
@@ -446,7 +459,7 @@ export const findCompleted = (row: any) => {
 };
 
 export const findRecord = (data: any, username: string) => {
-  let results = {
+  let results: any = {
     completedVaccine: 0,
     completedDose: 0,
     doses: 0,

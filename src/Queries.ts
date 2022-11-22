@@ -731,6 +731,7 @@ export function useWhoDidWhat(
           },
         },
       }: any = await api.post("wal/search", query);
+      console.log(records);
       let {
         data: {
           hits: { hits: facilities },
